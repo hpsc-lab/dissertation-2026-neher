@@ -1,0 +1,11 @@
+[deps]
+Bessels = "0e736298-9ec6-45e8-9647-e4fc86a2fe38"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+OrdinaryDiffEqLowOrderRK = "1344f307-1e59-4825-a18e-ace9aa3fa4c6"
+OrdinaryDiffEqLowStorageRK = "b0944070-b475-4768-8dec-fb6eb410534d"
+SimulationSetup = "d7aab624-db7e-4b7e-a0fb-c2de49791c6d"
+ThreadPinning = "811555cd-349b-4f26-b7bc-1f208b848042"
+TrixiParticles = "66699cd8-9c01-4e9d-a059-b96c86d16b3a"

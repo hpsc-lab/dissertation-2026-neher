@@ -1,0 +1,8 @@
+.vscode
+.DS_Store
+
+.JuliaFormatter.toml
+
+data/*
+out*/
+figures*/

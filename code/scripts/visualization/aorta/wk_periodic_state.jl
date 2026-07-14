@@ -1,0 +1,224 @@
+# ==========================================================================================
+# Plot periodic state of outlet pressures
+# ==========================================================================================
+# This script plots the pressure waveforms at each outlet over one cardiac cycle.
+# All cycles from the simulation are overlaid to show the convergence to a periodic state.
+# The last cycle is highlighted in red, while previous cycles are shown in blue.
+#
+# Data structure:
+# - results.p: Matrix where rows are outlets and columns are time points
+# - times_total: Time vector covering all cycles (n_cycles * T)
+# - times_cycle: Time vector for one cycle (0 to T)
+# ==========================================================================================
+
+using SimulationSetup
+using CSV, DataFrames
+using Statistics
+using CairoMakie
+
+param1, param2,
+param3 = length(ARGS) >= 3 ? (ARGS[1], parse(Bool, ARGS[2]), Symbol(ARGS[3])) :
+         ("F09", true, :exercise)
+
+include(pkgdir(SimulationSetup, "..", "scripts", "aorta", "velocity_functions.jl"))
+
+set_config!(scenario=param3)
+initialize_code_version!()
+
+result_variant = current_scenario()
+
+fsi = param2
+save_fig = true
+
+particle_spacing = 0.5e-3
+subject = param1
+
+# ==========================================================================================
+# ==== Load data
+if current_scenario() == :normotensive
+    const T = 0.75 # period duration
+    p_syst = 125.0
+    p_diast = 75.0
+    stroke_volume_factor = 1.0
+    v_peak_factor = 1.0
+elseif current_scenario() == :exercise
+    const T = 0.4 # period duration
+    p_syst = 180.0
+    p_diast = 85.0
+    stroke_volume_factor = 1.2
+    v_peak_factor = 2.2
+else # hypertensive peak
+    const T = 0.55 # period duration
+    p_syst = 200.0
+    p_diast = 120.0
+    stroke_volume_factor = 1.05
+    v_peak_factor = 1.3
+end
+const omega = 2pi / T # Angular frequency
+
+param_sim = SimulationParameters(subject; particle_spacing, T,
+                                 q_prescribed=realistic_flow_ratios,
+                                 stroke_volume_factor=stroke_volume_factor,
+                                 v_peak_factor=v_peak_factor,
+                                 p_syst=p_syst, p_diast=p_diast, L_eff=0.35)
+
+if fsi
+    results_dir = joinpath(out_dir(; result_variant), "aorta", "$subject", "elastic",
+                           "dp_$(particle_spacing)_t_0.002")
+else
+    results_dir = joinpath(out_dir(; result_variant), "aorta", "$subject", "rigid",
+                           "dp_$(particle_spacing)")
+end
+file = joinpath(results_dir, "resulting_pressures.csv")
+data_sim = CSV.read(file, DataFrame)
+
+t_final = last(data_sim[!, "time"]) # ncycles() * T
+times_total = data_sim[!, "time"][data_sim[!, "time"] .<= t_final]
+times_cycle = collect(0.0:0.01:T)
+
+# ==========================================================================================
+# ==== Prepare simulation results for plotting
+results = prepare_plot_data(data_sim, param_sim, times_total; T=T, t_final=t_final)
+
+function Q_prescr(t)
+    flow_rate_correction_factor = current_version() <= v"1.0.21" ? 1.3 : 1.0
+    return param_sim.subject_parameters.v_peak * flow_rate_correction_factor *
+           param_sim.subject_parameters.A_in * m3_to_ml() * velocity_inlet_fourier(t)
+end
+
+# ==========================================================================================
+# ==== Plot periodic state
+include("../theme.jl")
+set_theme!(my_thesis_theme)
+
+# Function to format outlet names for display
+function format_outlet_name(name)
+    replacements = Dict(
+        "left_subclavian" => "LSA",
+        "right_common" => "RCCA",
+        "left_common" => "LCCA",
+        "right_subclavian" => "RSA",
+        "thoracic" => "TA",
+        "brachiocephalic" => "BCT"
+    )
+    return get(replacements, name, titlecase(replace(name, "_" => " ")))
+end
+
+# Get outlet order from param_sim.boundaries, sorted by id
+# Filter out inflow (id = 0) and sort by id
+outlet_order = sort([key for (key, val) in param_sim.boundaries if key != "inflow"],
+                    by=key -> param_sim.boundaries[key].id)
+
+# Calculate number of cycles
+n_cycles = Int(round(t_final / T))
+
+# Global y-limit based on all outlets and all cycles
+global_y_max = if current_scenario() == :normotensive
+    120
+elseif current_scenario() == :exercise
+    200
+elseif current_scenario() == :hypertensive
+    180
+end
+
+# Update theme with colormap-based palette for automatic color cycling
+update_theme!(palette=(color=cgrad(:redblue, n_cycles, rev=true,
+                                   categorical=true),))
+
+# Create figure with subplots for each outlet
+fig = Figure(size=(1000, 1200 / param_sim.n_outlets) .* 0.9)
+
+# Create grid of axes - one column per outlet
+axs = []
+for (col, key) in enumerate(outlet_order)
+    ax = Axis(fig[1, col],
+              xlabel="",
+              ylabel=col == 1 ? "Pressure [mmHg]" : "",
+              title=format_outlet_name(key),
+              titlesize=12,
+              yticks=0:20:200)
+    push!(axs, ax)
+end
+
+# Plot each outlet
+for (col, key) in enumerate(outlet_order)
+    outlet_id = param_sim.boundaries[key].id
+
+    # Get pressure data for this outlet
+    p_outlet = results.p[outlet_id, :]
+
+    # Interpolate to times_cycle for each cycle
+    for cycle in 1:n_cycles
+        # Get time window for this cycle
+        t_start = (cycle - 1) * T
+        t_end = cycle * T
+
+        # Find indices in times_total that correspond to this cycle
+        cycle_mask = (times_total .>= t_start) .& (times_total .<= t_end)
+
+        if sum(cycle_mask) > 0
+            t_cycle_data = times_total[cycle_mask] .- t_start
+            p_cycle_data = p_outlet[cycle_mask]
+
+            # Interpolate to times_cycle
+            p_interpolated = [begin
+                                  idx = searchsortedfirst(t_cycle_data, t)
+                                  if idx > length(t_cycle_data)
+                                      p_cycle_data[end]
+                                  elseif idx == 1
+                                      p_cycle_data[1]
+                                  else
+                                      # Linear interpolation
+                                      t1, t2 = t_cycle_data[idx - 1], t_cycle_data[idx]
+                                      p1, p2 = p_cycle_data[idx - 1], p_cycle_data[idx]
+                                      p1 + (p2 - p1) * (t - t1) / (t2 - t1)
+                                  end
+                              end
+                              for t in times_cycle]
+
+            # Plot with automatic color from palette, last cycle thicker
+            cycle_linewidth = cycle == n_cycles ? 2.0 : 1.5
+            cycle_alpha = 1.0 #0.25 + 0.75 * (cycle - 1) / (n_cycles - 1)
+            lines!(axs[col], times_cycle, p_interpolated, #color=:black,
+                   label="Cycle $cycle", alpha=cycle_alpha, linewidth=cycle_linewidth)
+        end
+    end
+
+    # # # Plot prescribed mean pressure as dashed horizontal line
+    # p_mean = (p_syst + 2 * p_diast) / 3
+    # hlines!(axs[col], p_mean, color=:red, linestyle=:dash, linewidth=1.5)
+
+    # Plot mean pressure as dashed horizontal line
+    p_mean_outlet = results.p_mean[outlet_id, end]  # Mean pressure of last cycle
+    hlines!(axs[col], p_mean_outlet, color=:black, linestyle=:dash, linewidth=1.5)
+
+    # Set x and y axis limits and ticks
+    xlims!(axs[col], low=0)
+    ylims!(axs[col], low=0, high=global_y_max)
+    # ylims!(axs[col], low=0)
+end
+
+# Hide y-decorations for all but the first plot
+for i in 2:length(axs)
+    hideydecorations!(axs[i], grid=false)
+end
+
+# Add legend outside on the right
+Legend(fig[1, length(outlet_order) + 1], axs[1], fontsize=10, halign=:left, valign=:center,
+       tellheight=true)
+
+# Add common x-label
+Label(fig[2, :], "Time [s]", fontsize=14)
+colgap!(fig.layout, 5)
+resize_to_layout!(fig)
+
+# Optional: Save figure
+if save_fig
+    dir = joinpath(fig_dir(), "aorta")
+    mkpath(dir)
+    save(joinpath(dir,
+                  "wk_periodic_state_$(current_scenario())_$(subject)_$(fsi ? "elastic" : "rigid").pdf"),
+         fig)
+end
+
+fig

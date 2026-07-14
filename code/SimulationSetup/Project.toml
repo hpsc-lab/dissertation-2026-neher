@@ -1,0 +1,28 @@
+name = "SimulationSetup"
+uuid = "d7aab624-db7e-4b7e-a0fb-c2de49791c6d"
+version = "0.1.0"
+authors = ["LasNikas <niklas.nehe@web.de>"]
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PointNeighbors = "1c4d5385-0a27-49de-8e2c-43b175c8985c"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+TrixiParticles = "66699cd8-9c01-4e9d-a059-b96c86d16b3a"
+
+[compat]
+CSV = "0.10.16"
+DataFrames = "1.8.2"
+Dates = "1.11.0"
+LinearAlgebra = "1.12.0"
+PointNeighbors = "0.6.6"
+Reexport = "1.2.2"
+StaticArrays = "1.9.18"
+Suppressor = "0.2.8"
+TOML = "1.0.3"
+TrixiParticles = "0.5.1"

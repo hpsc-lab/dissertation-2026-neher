@@ -1,0 +1,13 @@
+{
+    "license": "MIT",
+    "title": "A Particle-Bases Simulation Pipeline for Patient-Specific Aortic Hemodynamics",
+    "upload_type": "software",
+    "creators": [
+        {
+            "affiliation": "High-Performance Computing Center Stuttgart, University of Stuttgart, Germany",
+            "name": "Neher, Niklas S.",
+            "orcid": "0009-0002-9457-4867"
+        }
+    ],
+    "access_right": "open"
+}
