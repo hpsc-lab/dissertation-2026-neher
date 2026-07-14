@@ -4,11 +4,25 @@ This repository contains information and code to reproduce the results presented
 dissertation
 ```bibtex
 TODO
+@misc{neher2026diss,
+  author    = {Neher, Niklas S.},
+  title     = {A Particle-Based Simulation Pipeline for Patient-Specific Aortic Hemodynamics}
+}
 ```
 
 If you find these results useful, please cite the work mentioned above. If you use the implementations provided here, please also cite this repository as
 ```bibtex
-TODO
+@software{neher2026reproducibility,
+  author       = {Neher, Niklas S.},
+  title        = {Reproducibility repository for
+                  "A Particle-Based Simulation Pipeline for Patient-Specific Aortic Hemodynamics"},
+  month        = jul,
+  year         = 2026,
+  publisher    = {Zenodo},
+  version      = {v0.1},
+  doi          = {10.5281/zenodo.21357207},
+  url          = {https://doi.org/10.5281/zenodo.21357207},
+}
 ```
 
 > Note: This thesis has been submitted for a doctoral degree at the Faculty of Mathematics, Natural Sciences, and Engineering of the University of Augsburg. It is currently under review  and has not yet been formally accepted or published.
