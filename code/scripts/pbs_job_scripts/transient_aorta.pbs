@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# Transient aorta simulation script
+#
+#PBS -N transient_aorta
+#PBS -l walltime=23:55:00
+#PBS -m bea
+
+#------------------------------------------------------------------------------
+# Parameter Setup
+#------------------------------------------------------------------------------
+# Default values (can be overridden with qsub -v)
+MODEL=${MODEL:-rigid}          # Options: rigid, elastic
+DEVICE=${DEVICE:-cpu}          # Options: cpu, gpu
+RESTART=${RESTART:-false}      # Options: true, false
+SCENARIO=${SCENARIO:-normotensive} # Options: normotensive, exercise, hypertensive
+SUBJECT=${SUBJECT:-F10}
+PARTICLE_SPACING=${PARTICLE_SPACING:-0.001}
+JULIA_THREADS=${JULIA_THREADS:-128}
+VERSION=${VERSION:-v1.0.1}
+
+# Validate inputs
+if [[ ! "$MODEL" =~ ^(rigid|elastic)$ ]]; then
+    echo "Error: MODEL must be 'rigid' or 'elastic', got '$MODEL'"
+    exit 1
+fi
+
+if [[ ! "$DEVICE" =~ ^(cpu|gpu)$ ]]; then
+    echo "Error: DEVICE must be 'cpu' or 'gpu', got '$DEVICE'"
+    exit 1
+fi
+
+if [[ ! "$RESTART" =~ ^(true|false)$ ]]; then
+    echo "Error: RESTART must be 'true' or 'false', got '$RESTART'"
+    exit 1
+fi
+
+#------------------------------------------------------------------------------
+# Resource Configuration based on DEVICE
+#------------------------------------------------------------------------------
+if [ "$DEVICE" == "gpu" ]; then
+    #PBS -l select=1:node_type=a100-40gb
+    SCRIPT_DIR="gpu"
+else
+    #PBS -l select=1:ncpus=128
+    SCRIPT_DIR=""
+fi
+
+#------------------------------------------------------------------------------
+# Julia Script Selection based on MODEL, DEVICE, and RESTART
+#------------------------------------------------------------------------------
+# Determine script type (setup or restart)
+if [ "$RESTART" == "true" ]; then
+    SCRIPT_TYPE="restart"
+
+    # Create directories and set up logging
+    mkdir -p logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/restart
+    LOGFILE="logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/restart/dp_${PARTICLE_SPACING}_${DEVICE}_${PBS_JOBID}.log"
+
+else
+    SCRIPT_TYPE="setup"
+
+    # Create directories and set up logging
+    mkdir -p logs/${VERSION}/${MODEL}_aorta/${SUBJECT}
+    LOGFILE="logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/dp_${PARTICLE_SPACING}_${DEVICE}_${PBS_JOBID}.log"
+fi
+
+# Build full path
+if [ "$DEVICE" == "gpu" ]; then
+    JULIA_FILE="scripts/aorta/gpu/${SCRIPT_TYPE}_${MODEL}.jl"
+else
+    JULIA_FILE="scripts/aorta/${SCRIPT_TYPE}_${MODEL}.jl"
+fi
+
+# Check if the script exists
+if [ ! -f "$JULIA_FILE" ]; then
+    echo "Error: Julia script not found: $JULIA_FILE"
+    exit 1
+fi
+
+#------------------------------------------------------------------------------
+# Set-up
+#------------------------------------------------------------------------------
+cd $PBS_O_WORKDIR
+
+exec >"$LOGFILE" 2>&1
+
+#------------------------------------------------------------------------------
+# Job Information
+#------------------------------------------------------------------------------
+echo "=========================================="
+echo "Transient Aorta Simulation"
+echo "=========================================="
+echo "Logfile:     $LOGFILE"
+echo "Job-ID:      $PBS_JOBID"
+echo "Job-Name:    $PBS_JOBNAME"echo "Mode:        $SCRIPT_TYPE"echo "Model:       $MODEL"
+echo "Device:      $DEVICE"
+echo "Subject:     $SUBJECT"
+echo "Spacing:     $PARTICLE_SPACING"
+echo "Threads:     $JULIA_THREADS"
+echo "Julia File:  $JULIA_FILE"
+echo "Working dir: $(pwd)"
+echo "Start time:  $(date)"
+echo "=========================================="
+echo ""
+
+#------------------------------------------------------------------------------
+# Run Simulation
+#------------------------------------------------------------------------------
+julia --project=. --threads=$JULIA_THREADS "$JULIA_FILE" "$SUBJECT" "$PARTICLE_SPACING" "$SCENARIO"
+
+EXIT_CODE=$?
+echo ""
+echo "=========================================="
+echo "Job completed at $(date)"
+echo "Exit code: $EXIT_CODE"
+echo "=========================================="
+
+exit $EXIT_CODE

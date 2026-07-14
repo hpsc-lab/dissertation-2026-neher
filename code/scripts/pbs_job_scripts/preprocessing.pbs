@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Aorta geometry preprocessing script
+#
+#PBS -N preprocessing
+#PBS -l select=1:node_type=mi300a
+#PBS -l walltime=23:55:00
+
+#------------------------------------------------------------------------------
+# Parameter Setup
+#------------------------------------------------------------------------------
+# Flexible parameters (can be overridden with qsub -v)
+SUBJECT=${SUBJECT:-F09}
+JULIA_THREADS=${JULIA_THREADS:-128}
+PARTICLE_SPACING=${PARTICLE_SPACING:-0.001}
+VERSION=${VERSION:-v1.0.1}
+JULIA_FILE=scripts/aorta/preprocessing.jl
+
+#------------------------------------------------------------------------------
+# Set-up
+#------------------------------------------------------------------------------
+cd $PBS_O_WORKDIR
+
+mkdir -p logs/preprocessing/${VERSION}/${SUBJECT}
+LOGFILE="logs/preprocessing/${VERSION}/${SUBJECT}/dp_${PARTICLE_SPACING}_nthreads_${JULIA_THREADS}_${PBS_JOBID}.log"
+
+exec >"$LOGFILE" 2>&1
+
+#------------------------------------------------------------------------------
+# Job Information
+#------------------------------------------------------------------------------
+echo "=========================================="
+echo "Aorta Geometry Preprocessing"
+echo "=========================================="
+echo "Logfile:     $LOGFILE"
+echo "Job-ID:      $PBS_JOBID"
+echo "Job-Name:    $PBS_JOBNAME"
+echo "Subject:     $SUBJECT"
+echo "Spacing:     $PARTICLE_SPACING"
+echo "Threads:     $JULIA_THREADS"
+echo "Julia File:  $JULIA_FILE"
+echo "Working dir: $(pwd)"
+echo "Start time:  $(date)"
+echo "=========================================="
+echo ""
+
+#------------------------------------------------------------------------------
+# Run Preprocessing
+#------------------------------------------------------------------------------
+julia --project=. --threads=$JULIA_THREADS "$JULIA_FILE" "$SUBJECT" "$PARTICLE_SPACING" "$VERSION"
+
+EXIT_CODE=$?
+echo ""
+echo "=========================================="
+echo "Job completed at $(date)"
+echo "Exit code: $EXIT_CODE"
+echo "=========================================="
+
+exit $EXIT_CODE
