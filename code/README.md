@@ -2,6 +2,8 @@
 
 This repository contains all code to reproduce the numerical experiments and simulations presented in the dissertation. It includes validation scripts for pressure models and SPH methods, as well as patient-specific aortic simulations.
 
+> **Note:** Data (`out/` and `data/` directory) will be archived on Zenodo after the dissertation is published. TODO
+
 **Table of Contents**
 - [System Requirements](#system-requirements)
 - [Installation](#installation)
