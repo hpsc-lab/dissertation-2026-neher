@@ -37,11 +37,16 @@ GPU scripts are available in [`scripts/aorta/gpu/`](scripts/aorta/gpu/) for fast
 
 **Backend Options:**
 - `CUDABackend()` — NVIDIA GPUs
-- `AMDGPUBackend()` — AMD GPUs
+- `ROCBackend()` — AMD GPUs
 - `MetalBackend()` — Apple Silicon Macs
 
 You **must adjust the backend** in GPU scripts to match your hardware. See [TrixiParticles.jl GPU documentation](https://trixi-framework.org/TrixiParticles.jl/stable/gpu/) for details.
+You must also add the corresponding GPU package to the project environment:
 
+```bash
+# For NVIDIA GPUs
+julia --project=. -e 'using Pkg; Pkg.add("CUDA")'
+```
 
 ---
 
@@ -204,6 +209,8 @@ Stage 3: Production Simulation (1 cardiac cycle)
 
 **Do not skip Stage 2** — it establishes the periodic steady state required for Stage 3.
 
+---
+
 #### Stage 1: Preprocessing
 
 Loads STL segmentations and generates simulation-ready particle distributions.
@@ -225,7 +232,7 @@ qsub -v SUBJECT=F10,PARTICLE_SPACING=0.0005 \
 
 **Expected Output:**
 ```
-data/aorta_initial_condition/v1.0/packed_results_F09/
+data/aorta_initial_condition/v1/packed_results_{SUBJECT}/
 ```
 
 > **Optional Step:** Run `scripts/aorta/preprocess_geometries.jl` if you want to process (centering and scaling) new/custom STL geometries. Pre-processed geometries for all subjects (F01–F16) are already included in `data/aorta_preprocessed/`.
@@ -263,7 +270,7 @@ qsub -v RESTART=true,MODEL=elastic,SUBJECT=F10 \
 
 **Expected Output:**
 ```
-out/out_normotensive/F10/rigid/
+out/out_{SCENARIO}/{SUBJECT}/{MODEL}/
 ```
 
 ---
@@ -292,7 +299,7 @@ qsub -v RESTART=true,MODEL=elastic,SUBJECT=F10 \
 
 **Expected Output:**
 ```
-out/out_normotensive/F10/rigid/full_cycle/
+out/out_{SCENARIO}/{SUBJECT}/{MODEL}/full_cycle/
 ```
 
 ---
@@ -347,11 +354,11 @@ julia --project=. scripts/visualization/open_boundaries/kernel_ramping.jl
 julia --project=. scripts/visualization/validation/poiseuille_flow_2d.jl
 # → Output: figures/validation/
 
-# Fig. 3.21 (a) — Wall shear stress (WSS) analysis, time point 0
+# Fig. 3.21 (a) — Wall shear stress (WSS) analysis (on physical interface)
 julia --project=. scripts/visualization/validation/wss_poiseuille_flow_2d.jl 0
 # → Output: figures/validation/
 
-# Fig. 3.21 (b) — WSS analysis, time point 1
+# Fig. 3.21 (b) — WSS analysis (on wall)
 julia --project=. scripts/visualization/validation/wss_poiseuille_flow_2d.jl 1
 # → Output: figures/validation/
 
@@ -373,7 +380,7 @@ paraview scripts/visualization/paraview_states/robustness.pvsm
 # Fig. 3.24 — Pulsatile pipe setup visualization
 paraview scripts/visualization/paraview_states/setup_pulsatile_pipe.pvsm
 
-# Fig. 3.25 — Pulsatile pipe 32-particle result
+# Fig. 3.25 — Pulsatile pipe
 paraview scripts/visualization/paraview_states/pulsatile_pipe_32.pvsm
 ```
 

@@ -1,9 +1,11 @@
 using SimulationSetup
 using TrixiParticles
-using Metal
+using AMDGPU
 
-parallelization_backend = MetalBackend()
-coord_eltype = parallelization_backend isa MetalBackend ? Float32 : Float64
+parallelization_backend = ROCBackend()
+# If `MetalBackend`
+# coord_eltype = Float32
+coord_eltype = Float64
 
 trixi_include_changeprecision(Float32, @__MODULE__,
                               joinpath(@__DIR__, "..", "setup_elastic.jl"),

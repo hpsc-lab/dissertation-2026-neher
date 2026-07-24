@@ -86,7 +86,7 @@ for particle_spacing in particle_spacings
 end
 
 function Q_prescr(t)
-    flow_rate_correction_factor = current_version() <= v"1.0.21" ? 1.3 : 1.0
+    flow_rate_correction_factor = 1.0
     param_sim = results_all[1].param_sim
     return param_sim.subject_parameters.v_peak * flow_rate_correction_factor *
            param_sim.subject_parameters.A_in * m3_to_ml() * velocity_inlet_fourier(t)

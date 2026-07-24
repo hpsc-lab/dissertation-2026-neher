@@ -18,7 +18,7 @@ subject = "F10"
 particle_spacing = 0.0005
 
 trixi_include(@__MODULE__, joinpath(@__DIR__, "setup_fluid.jl"), subject=subject,
-              flow_rate_correction_factor=1.3, factor_buffer_size=4,
+              flow_rate_correction_factor=1.0, factor_buffer_size=4,
               particle_spacing=particle_spacing)
 
 output_directory = joinpath(out_dir(), "aorta", "$subject", "elastic",

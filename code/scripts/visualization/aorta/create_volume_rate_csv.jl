@@ -80,7 +80,7 @@ t_final = max(t_final_rigid, t_final_elastic)
 
 # ==========================================================================================
 # ==== Preprocess simulation results
-flow_rate_correction_factor = current_version() <= v"1.0.21" ? 1.3 : 1.0
+flow_rate_correction_factor = 1.0
 Q_analytic_rigid = param_sim.subject_parameters.v_peak * param_sim.subject_parameters.A_in *
                    flow_rate_correction_factor * m3_to_ml() *
                    velocity_inlet_fourier.(times_rigid)

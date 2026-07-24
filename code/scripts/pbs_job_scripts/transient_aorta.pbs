@@ -3,8 +3,10 @@
 # Transient aorta simulation script
 #
 #PBS -N transient_aorta
+#PBS -l select=1:node_type=mi300a
 #PBS -l walltime=23:55:00
-#PBS -m bea
+
+cd $PBS_O_WORKDIR
 
 #------------------------------------------------------------------------------
 # Parameter Setup
@@ -54,15 +56,15 @@ if [ "$RESTART" == "true" ]; then
     SCRIPT_TYPE="restart"
 
     # Create directories and set up logging
-    mkdir -p logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/restart
-    LOGFILE="logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/restart/dp_${PARTICLE_SPACING}_${DEVICE}_${PBS_JOBID}.log"
+    mkdir -p logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/${SCENARIO}/restart
+    LOGFILE="logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/${SCENARIO}/restart/dp_${PARTICLE_SPACING}_${DEVICE}_${PBS_JOBID}.log"
 
 else
     SCRIPT_TYPE="setup"
 
     # Create directories and set up logging
-    mkdir -p logs/${VERSION}/${MODEL}_aorta/${SUBJECT}
-    LOGFILE="logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/dp_${PARTICLE_SPACING}_${DEVICE}_${PBS_JOBID}.log"
+    mkdir -p logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/${SCENARIO}
+    LOGFILE="logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/${SCENARIO}/dp_${PARTICLE_SPACING}_${DEVICE}_${PBS_JOBID}.log"
 fi
 
 # Build full path
@@ -81,7 +83,6 @@ fi
 #------------------------------------------------------------------------------
 # Set-up
 #------------------------------------------------------------------------------
-cd $PBS_O_WORKDIR
 
 exec >"$LOGFILE" 2>&1
 
@@ -93,7 +94,10 @@ echo "Transient Aorta Simulation"
 echo "=========================================="
 echo "Logfile:     $LOGFILE"
 echo "Job-ID:      $PBS_JOBID"
-echo "Job-Name:    $PBS_JOBNAME"echo "Mode:        $SCRIPT_TYPE"echo "Model:       $MODEL"
+echo "Job-Name:    $PBS_JOBNAME"
+echo "Mode:        $SCRIPT_TYPE"
+echo "Model:       $MODEL"
+echo "scenario:    $SCENARIO"
 echo "Device:      $DEVICE"
 echo "Subject:     $SUBJECT"
 echo "Spacing:     $PARTICLE_SPACING"
@@ -107,7 +111,7 @@ echo ""
 #------------------------------------------------------------------------------
 # Run Simulation
 #------------------------------------------------------------------------------
-julia --project=. --threads=$JULIA_THREADS "$JULIA_FILE" "$SUBJECT" "$PARTICLE_SPACING" "$SCENARIO"
+julia --project=. --threads=$JULIA_THREADS "$JULIA_FILE" "$SUBJECT" "$PARTICLE_SPACING" "$VERSION" "$SCENARIO"
 
 EXIT_CODE=$?
 echo ""

@@ -3,8 +3,10 @@
 # Production aorta cycle simulation script (runs after transient_aorta warmup)
 #
 #PBS -N simulate_cycle_aorta
+#PBS -l select=1:node_type=mi300a
 #PBS -l walltime=23:55:00
-#PBS -m bea
+
+cd $PBS_O_WORKDIR
 
 #------------------------------------------------------------------------------
 # Parameter Setup
@@ -60,11 +62,10 @@ fi
 #------------------------------------------------------------------------------
 # Set-up
 #------------------------------------------------------------------------------
-cd $PBS_O_WORKDIR
 
 # Create directories and set up logging
-mkdir -p logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/full_cycle
-LOGFILE="logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/full_cycle/dp_${PARTICLE_SPACING}_${DEVICE}_${PBS_JOBID}.log"
+mkdir -p logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/${SCENARIO}/full_cycle
+LOGFILE="logs/${VERSION}/${MODEL}_aorta/${SUBJECT}/${SCENARIO}/full_cycle/dp_${PARTICLE_SPACING}_${DEVICE}_${PBS_JOBID}.log"
 
 exec >"$LOGFILE" 2>&1
 
@@ -91,7 +92,7 @@ echo ""
 #------------------------------------------------------------------------------
 # Run Simulation
 #------------------------------------------------------------------------------
-julia --project=. --threads=$JULIA_THREADS "$JULIA_FILE" "$SUBJECT" "$PARTICLE_SPACING" "$SCENARIO"
+julia --project=. --threads=$JULIA_THREADS "$JULIA_FILE" "$SUBJECT" "$PARTICLE_SPACING" "$VERSION" "$SCENARIO"
 
 EXIT_CODE=$?
 echo ""

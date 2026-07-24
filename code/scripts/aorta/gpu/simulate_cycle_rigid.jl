@@ -1,11 +1,11 @@
 using SimulationSetup
 using TrixiParticles
-using CUDA
+using AMDGPU
 
 # Load variables into scope
 trixi_include_changeprecision(Float32, @__MODULE__,
                               joinpath(@__DIR__, "..", "setup_rigid.jl"),
-                              parallelization_backend=CUDABackend(),
+                              parallelization_backend=ROCBackend(),
                               callbacks=nothing, ode=nothing, sol=nothing)
 
 latest_iter = latest_restart_iter(output_directory)

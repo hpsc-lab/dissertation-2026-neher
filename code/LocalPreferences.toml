@@ -1,0 +1,2 @@
+[AMDGPU]
+nonblocking_synchronization = false

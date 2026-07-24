@@ -81,7 +81,7 @@ times_cycle = collect(0.0:0.01:T)
 results = prepare_plot_data(data_sim, param_sim, times_total; T=T, t_final=t_final)
 
 function Q_prescr(t)
-    flow_rate_correction_factor = current_version() <= v"1.0.21" ? 1.3 : 1.0
+    flow_rate_correction_factor = 1.0
     return param_sim.subject_parameters.v_peak * flow_rate_correction_factor *
            param_sim.subject_parameters.A_in * m3_to_ml() * velocity_inlet_fourier(t)
 end

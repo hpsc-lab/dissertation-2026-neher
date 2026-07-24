@@ -39,7 +39,7 @@ p_diast = params.p_diast
 stroke_volume_factor = params.stroke_volume_factor
 v_peak_factor = params.v_peak_factor
 
-flow_rate_correction_factor = current_version() <= v"1.0.21" ? 1.3 : 1.0
+flow_rate_correction_factor = 1.0
 
 param_sim = SimulationParameters(subject; particle_spacing, T, density_blood,
                                  q_prescribed=realistic_flow_ratios,
@@ -50,7 +50,7 @@ param_sim = SimulationParameters(subject; particle_spacing, T, density_blood,
 
 geometry_names = vcat(["aorta", "aorta_boundary"], collect(keys(boundaries)))
 files = joinpath.(data_dir(), "aorta_initial_condition",
-                  "v$(current_version().major).$(current_version().minor)",
+                  "v$(current_version().major)",
                   "packed_results_" * subject, "dp_$(particle_spacing)",
                   "packed_" .* geometry_names .* ".vtu")
 ic_dict = Dict(zip(geometry_names,
